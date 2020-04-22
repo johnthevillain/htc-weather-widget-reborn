@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Partly Cloudy (Day)</title>
+    <meta charset="utf-8" content="width=device-width, minimum-scale=0.1, maximum-scale=1.0, user-scalable=yes" name="viewport" />
+    <link href="partly-cloudy/partly-cloudy.css" rel="stylesheet" />
+    <link href="sun/sun.css" rel="stylesheet" />
+    <script src="partly-cloudy/partly-cloudy.js" type="text/javascript"></script>
+    <script src="sun/sun.js" type="text/javascript"></script>
+    <script>
+        window.onload = function() {
+            setInterval("location.reload()", 1000 * 60 * 60);
+            partlyCloudy.init();
+        }
+    </script>
+</head>
+
+<body style="margin: 0px 0px 0px 0px; overflow: no;">
+    <div id="sun">
+        <img id="sunContainer" onload="changeImage()" src="sun/sun-0.png" />
+    </div>
+    <div id="cloudContainer"></div>
+</body>
+
+</html>

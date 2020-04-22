@@ -1,0 +1,29 @@
+body {
+	margin: 0px;
+}
+
+#rainbow {
+	background-color: transparent;
+	height: 736px;
+	left: 0px;
+	opacity: 0.0;
+	position: absolute;
+	top: 0px;
+	-webkit-animation-delay: 5s;
+	-webkit-animation-duration: 30s;
+	-webkit-animation-iteration-count: infinite;
+	-webkit-animation-name: rainbow-animation;
+	width: 414px;
+}
+
+@-webkit-keyframes rainbow-animation {
+	0% {
+		opacity: 0.0;
+	}
+	50% {
+		opacity: 1.0;
+	}
+	100% {
+		opacity: 0.0;
+	}
+}

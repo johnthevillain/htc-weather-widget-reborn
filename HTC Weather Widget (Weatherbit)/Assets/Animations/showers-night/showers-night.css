@@ -1,0 +1,68 @@
+#cloudContainer {
+	background-color: transparent;
+	height: 736px;
+	opacity: 0.8;
+	overflow: hidden;
+	position: absolute;
+	top: 0px;
+	width: 414px;
+	z-index: 0;
+}
+
+#cloudContainer div {
+	height: 176x;
+	position: absolute;
+	-webkit-animation-direction: horizontal, normal;
+	-webkit-animation-iteration-count: infinite, infinite;
+	-webkit-animation-timing-function: ease-in, linear;
+	width: 250px;
+}
+
+#cloudContainer div img {
+	height: 176px;
+	position: absolute;
+	-webkit-animation-direction: alternate;
+	-webkit-animation-iteration-count: infinite;
+	-webkit-animation-timing-function: ease-in-out;
+	-webkit-transform-origin: 50% -100%;
+	width: 250px;
+}
+
+@-webkit-keyframes clockwiseSpin {
+	0% {
+		-webkit-transform: rotate(-2deg);
+	}
+	100% {
+		-webkit-transform: rotate(2deg);
+	}
+}
+
+@-webkit-keyframes counterclockwiseSpinAndFlip {
+	0% {
+		-webkit-transform: scale(-1, 1) rotate(2deg);
+	}
+	100% {
+		-webkit-transform: scale(-1, 1) rotate(-2deg);
+	}
+}
+
+@-webkit-keyframes fade {
+	0% {
+		opacity: 1;
+	}
+	95% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+
+@-webkit-keyframes float {
+	0% {
+		-webkit-transform: translate(-20px, 0px);
+	}
+	100% {
+		-webkit-transform: translate(640px, 40px);
+	}
+}

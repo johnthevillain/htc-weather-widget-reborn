@@ -1,0 +1,37 @@
+#dropContainer {
+	background-color: transparent;
+	height: 736px;
+	overflow: hidden;
+	position: absolute;
+	top: -50px;
+	width: 414px;
+	z-index: 1;
+}
+
+#dropContainer div {
+	height: 12px;
+	position: absolute;
+	-webkit-animation-direction: normal, normal;
+	-webkit-animation-iteration-count: infinite, infinite;
+	-webkit-animation-timing-function: ease-in, linear;
+	width: 14px;
+}
+
+#dropContainer div img {
+	height: 12px;
+	position: absolute;
+	-webkit-animation-direction: alternate;
+	-webkit-animation-iteration-count: infinite;
+	-webkit-animation-timing-function: ease-in-out;
+	-webkit-transform-origin: 50% -100%;
+	width: 14px;
+}
+
+@-webkit-keyframes drop {
+	0% {
+		-webkit-transform: translate(0px, -50px);
+	}
+	100% {
+		-webkit-transform: translate(0px, 600px);
+	}
+}

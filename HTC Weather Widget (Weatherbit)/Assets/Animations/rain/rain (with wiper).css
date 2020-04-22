@@ -1,0 +1,64 @@
+#rain {
+	height: 2588px;
+	top: 20px;
+	-webkit-animation-duration: 15s;
+	-webkit-animation-iteration-count: infinite;
+	-webkit-animation-name: rain-animation;
+	-webkit-animation-timing-function: linear;
+	-webkit-transform: translateY(-2600px);
+	width: 414px;
+}
+
+@-webkit-keyframes rain-animation {
+	0% {
+		-webkit-transform: translateY(-2600px);
+		opacity: 1;
+	}
+	70% {
+		-webkit-transform: translateY(-400px);
+		opacity: 1;
+	}
+	75% {
+		-webkit-transform: translateY(-350px);
+		opacity: 0.5;
+	}
+	85% {
+		-webkit-transform: translateY(-300px);
+		opacity: 0;
+	}
+	100% {
+		-webkit-transform: translateY(500px);
+		opacity: 0;
+	}
+}
+
+@-webkit-keyframes wiper {
+	0% {
+		-webkit-transform: rotate(-90deg);
+	}
+	70% {
+		-webkit-transform: rotate(-90deg);
+	}
+	75% {
+		-webkit-transform: rotate(90deg);
+	}
+	80% {
+		-webkit-transform: rotate(-90deg);
+	}
+	100% {
+		-webkit-transform: rotate(-90deg);
+	}
+}
+
+#wiper {
+	left: 150px;
+	position: absolute;
+	top: -10px;
+	-webkit-animation-duration: 15s;
+	-webkit-animation-iteration-count: infinite;
+	-webkit-animation-name: wiper;
+	-webkit-transform: rotate(-90deg);
+	-webkit-transform-origin-x: 10;
+	-webkit-transform-origin-y: 0;
+	z-index: 1;
+}

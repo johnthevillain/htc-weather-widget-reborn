@@ -1,0 +1,67 @@
+#windContainer {
+	height: 736px;
+	opacity: 1.0;
+	overflow: hidden;
+	position: absolute;
+	top: 0px;
+	width: 414px;
+	z-index: 0;
+}
+
+#windContainer div {
+	height: 50px;
+	position: absolute;
+	-webkit-animation-direction: horizontal, normal;
+	-webkit-animation-iteration-count: infinite, infinite;
+	-webkit-animation-timing-function: ease-in, linear;
+	width: 50px;
+}
+
+#windContainer div img {
+	height: 50px;
+	position: absolute;
+	-webkit-animation-direction: alternate;
+	-webkit-animation-iteration-count: infinite;
+	-webkit-animation-timing-function: ease-in-out;
+	-webkit-transform-origin: 50% -100%;
+	width: 50px;
+}
+
+@-webkit-keyframes clockwiseSpin {
+	0% {
+		-webkit-transform: rotateX(-360deg);
+	}
+	100% {
+		-webkit-transform: rotateX(360deg);
+	}
+}
+
+@-webkit-keyframes counterclockwiseSpinAndFlip {
+	0% {
+		-webkit-transform: scale(-1, 1) rotate(360deg);
+	}
+	100% {
+		-webkit-transform: scale(-1, 1) rotate(-360deg);
+	}
+}
+
+@-webkit-keyframes fade {
+	0% {
+		opacity: 1;
+	}
+	95% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+@-webkit-keyframes float {
+	0% {
+		-webkit-transform: translate(-220px, 0px);
+	}
+	100% {
+		-webkit-transform: translate(640px, 40px);
+	}
+}

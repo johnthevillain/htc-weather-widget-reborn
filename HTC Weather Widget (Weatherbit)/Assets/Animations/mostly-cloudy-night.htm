@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Mostly Cloudy (Night)</title>
+    <meta charset="utf-8" content="width=device-width, minimum-scale=0.1, maximum-scale=1.0, user-scalable=yes" name="viewport" />
+    <link href="mostly-cloudy-night/mostly-cloudy-night.css" rel="stylesheet" />
+    <link href="moon/moon.css" rel="stylesheet" />
+    <script src="mostly-cloudy-night/mostly-cloudy-night.js" type="text/javascript"></script>
+    <script src="moon/moon.js" type="text/javascript"></script>
+    <script>
+        window.onload = function() {
+            setInterval("location.reload()", 1000 * 60 * 60);
+            mostlyCloudyNight.init();
+        }
+    </script>
+</head>
+
+<body style="margin: 0px 0px 0px 0px; overflow: no;">
+    <div id="moon">
+        <img id="moonContainer" onload="changeImage()" src="moon/moon-0.png" />
+    </div>
+    <div id="cloudContainer"></div>
+</body>
+
+</html>

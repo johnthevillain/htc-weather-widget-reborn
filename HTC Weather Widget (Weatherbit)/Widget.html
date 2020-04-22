@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>HTC Weather Widget</title>
+    <meta charset="utf-8" content="width=device-width, minimum-scale=0.1, maximum-scale=1.0, user-scalable=yes" name="viewport" />
+    <link href="Assets/Stylesheets/jquery-ui.css" rel="stylesheet" />
+    <link href="Assets/Stylesheets/styles.css" rel="stylesheet" />
+    <script src="Assets/Scripts/jquery.js" type="text/javascript"></script>
+    <script src="Assets/Scripts/jquery-ui.js" type="text/javascript"></script>
+    <script src="Assets/Scripts/moment.js" type="text/javascript"></script>
+    <script src="Assets/Scripts/moment-timezone.js" type="text/javascript"></script>
+    <script src="Assets/Scripts/store.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        var widgetStyle = store.get("HTC_Weather_Widget_widgetStyle", "all");
+        var showWeatherAnimation = (store.get("HTC_Weather_Widget_showWeatherAnimation", "true") === "true");
+        var useMetricSystem = (store.get("HTC_Weather_Widget_useMetricSystem", "false") === "true");
+        var useRealFeel = (store.get("HTC_Weather_Widget_useRealFeel", "false") === "true");
+        var locationCode = store.get("HTC_Weather_Widget_locationCode", "47.6062, -122.3321");
+        var resize = store.get("HTC_Weather_Widget_resize", 100);
+        var updateInterval = store.get("HTC_Weather_Widget_updateInterval", 30);
+        var apiKey = "YOUR API KEY GOES HERE BETWEEN THESE QUOTES. TO GET A FREE API KEY, CREATE A FREE ACCOUNT ON WEATHERBIT.";
+        var currentWeatherURL = null;
+        var forecastURL = null;
+        var obj = {};
+
+        $(document).ready(function() {
+            $.ajaxSetup({
+                cache: false
+            });
+
+            $(function() {
+                $(document).tooltip();
+            });
+
+            if (widgetStyle == "all" || widgetStyle == "ccClock" || widgetStyle == "ccForecast") {
+                document.getElementById("animationFrame").width = "414px";
+                document.getElementById("animationFrame").height = "323px"; //323
+            } else {
+                document.getElementById("animationFrame").width = "414px";
+                document.getElementById("animationFrame").height = "112px"; //112
+            }
+
+            document.getElementById("mainContentArea").style.left = "0px";
+            document.getElementById("mainContentArea").style.position = "absolute";
+            document.getElementById("mainContentArea").style.top = "0px";
+            document.getElementById("mainContentArea").style.transform = "scale(" + (resize / 100) + ")";
+            document.getElementById("mainContentArea").style.transformOrigin = "0 0";
+        });
+
+        function calendarDate() {
+            var this_weekday_name_array = new Array("Sun.", "Mon.", "Tue.", "Wed.", "Thu.", "Fri.", "Sat.");
+            var this_month_name_array = new Array("Jan.", "Feb.", "Mar.", "Apr.", "May", "Jun.", "Jul.", "Aug.", "Sep.", "Oct.", "Nov.", "Dec."); //predefine month names
+            var this_date_timestamp = new Date();
+            var this_weekday = this_date_timestamp.getDay();
+            var this_date = this_date_timestamp.getDate();
+            var this_month = this_date_timestamp.getMonth();
+            document.getElementById("calendar").innerHTML = this_weekday_name_array[this_weekday] + ", " + this_month_name_array[this_month] + " " + this_date;
+        }
+
+        function fetchWeatherData(error) {
+            $(".loadWeatherDataErrorDialog").dialog("close");
+
+            if (locationCode.includes(",")) {
+                currentWeatherURL = "https://cors-anywhere.herokuapp.com/http://api.weatherbit.io/v2.0/current?key=" + apiKey + "&lang=en&lat=" + locationCode.split(",")[0] + "&lon=" + locationCode.split(",")[1] + "&units=" + (useMetricSystem ? "M" : "I");
+            } else {
+                currentWeatherURL = "https://cors-anywhere.herokuapp.com/http://api.weatherbit.io/v2.0/current?key=" + apiKey + "&lang=en&postal_code=" + locationCode + "&units=" + (useMetricSystem ? "M" : "I");
+            }
+
+            $.ajax({
+                url: currentWeatherURL,
+                cache: false,
+                dataType: "json",
+                error: function(xhr, textStatus, errorThrown) {
+                    $("<div class=\"loadWeatherDataErrorDialog\"><table><tr><td><span class=\"ui-icon ui-icon-alert\" style=\"float: left; margin: 12px 12px 20px 0px;\"></span></td><td><p>An error occurred while retrieving the current weather data.<br><br>Error:<br>" + xhr.status + "<br>" + errorThrown + "</p></td></tr></table></div>").dialog({
+                        maxHeight: 320,
+                        modal: true,
+                        title: "Error",
+                        width: 350,
+                        buttons: {
+                            "OK": function() {
+                                $(this).dialog("close");
+                            }
+                        }
+                    });
+                },
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                success: function(result) {
+                    obj.city = result.data[0].city_name;
+                    obj.country = result.data[0].country_code;
+                    obj.latitude = result.data[0].lat;
+                    obj.longitude = result.data[0].lon;
+                    obj.state = result.data[0].state_code;
+
+                    obj.code = result.data[0].weather.code;
+                    obj.description = result.data[0].weather.description;
+                    obj.feelsLike = Math.round(result.data[0].app_temp);
+                    obj.icon = result.data[0].weather.icon;
+                    obj.temp = Math.round(result.data[0].temp);
+
+                    obj.airQualityIndex = result.data[0].aqi;
+                    obj.dewPoint = result.data[0].dewpt;
+                    obj.humidity = result.data[0].rh;
+                    obj.moonPhase = getMoonPhaseFromDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate());
+                    obj.pressure = result.data[0].pres;
+                    obj.seaLevelPressure = result.data[0].slp;
+                    obj.sunrise = moment.utc(result.data[0].sunrise, "H:mm").local().format("h:mm A");
+                    obj.sunset = moment.utc(result.data[0].sunset, "H:mm").local().format("h:mm A");
+                    obj.uv = result.data[0].uv;
+                    obj.visibility = result.data[0].vis;
+
+                    obj.direction = result.data[0].wind_cdir;
+                    obj.windspeed = result.data[0].wind_spd;
+
+                    obj.observationStation = result.data[0].station;
+                    obj.timezone = result.data[0].timezone;
+                    obj.updateTimeString = moment.utc(result.data[0].ob_time).local().format("M/D/YYYY h:mm A") + " " + moment().tz(moment.tz.guess()).format("z");
+
+                    if (widgetStyle != "forecast") {
+                        document.getElementById("city").innerText = obj.city;
+                        document.getElementById("desc").innerHTML = "<b>" + obj.description + "</b>";
+                        document.getElementById("humidity").innerHTML = "Humidity: " + obj.humidity + "%";
+                        document.getElementById("sunrise").innerHTML = "Sunrise: " + obj.sunrise;
+                        document.getElementById("sunset").innerHTML = "Sunset: " + obj.sunset;
+
+                        if (useRealFeel) {
+                            document.getElementById("temp").innerHTML = obj.feelsLike + "&#176;";
+                        } else {
+                            document.getElementById("temp").innerHTML = obj.temp + "&#176;";
+                        }
+                        if (useMetricSystem) {
+                            document.getElementById("temp").innerHTML += "C";
+                        } else {
+                            document.getElementById("temp").innerHTML += "F";
+                        }
+
+                        document.getElementById("update").innerText = "Updated: " + obj.updateTimeString;
+                        document.getElementById("weatherIcon").src = "Assets/Icons/" + getName(obj.code, obj.icon, true) + ".png";
+
+                        if (useMetricSystem) {
+                            document.getElementById("wind").innerHTML = "Wind: " + obj.windspeed + " KM/H " + obj.direction;
+                        } else {
+                            document.getElementById("wind").innerHTML = "Wind: " + obj.windspeed + " MPH " + obj.direction;
+                        }
+                    }
+
+                    if (showWeatherAnimation == true) {
+                        document.getElementById("animationFrame").src = "Assets/Animations/" + getName(obj.code, obj.icon, false) + ".htm";
+                    } else {
+                        document.getElementById("animationFrame").src = "Assets/Animations/" + "blank" + ".htm";
+                    }
+                }
+            });
+
+            if (locationCode.includes(",")) {
+                forecastURL = "https://cors-anywhere.herokuapp.com/https://api.weatherbit.io/v2.0/forecast/daily?key=" + apiKey + "&lang=en&lat=" + locationCode.split(",")[0] + "&lon=" + locationCode.split(",")[1] + "&units=" + (useMetricSystem ? "M" : "I");
+            } else {
+                forecastURL = "https://cors-anywhere.herokuapp.com/https://api.weatherbit.io/v2.0/forecast/daily?key=" + apiKey + "&lang=en&postal_code=" + locationCode + "&units=" + (useMetricSystem ? "M" : "I");
+            }
+
+            $.ajax({
+                url: forecastURL,
+                cache: false,
+                dataType: "json",
+                error: function(xhr, textStatus, errorThrown) {
+                    $("<div class=\"loadWeatherDataErrorDialog\"><table><tr><td><span class=\"ui-icon ui-icon-alert\" style=\"float: left; margin: 12px 12px 20px 0px;\"></span></td><td><p>An error occurred while retrieving the forecast weather data.<br><br>Error:<br>" + xhr.status + "<br>" + errorThrown + "</p></td></tr></table></div>").dialog({
+                        maxHeight: 320,
+                        modal: true,
+                        title: "Error",
+                        width: 350,
+                        buttons: {
+                            "OK": function() {
+                                $(this).dialog("close");
+                            }
+                        }
+                    });
+                },
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                success: function(result) {
+                    obj.day = [];
+
+                    for (index in result.data) {
+                        obj.day[index] = {
+                            name: "Unknown",
+                            code: 0,
+                            icon: 3200,
+                            hi: 0,
+                            low: 0
+                        };
+
+                        obj.day[index].code = result.data[index].weather.code;
+                        obj.day[index].high = Math.round(result.data[index].high_temp);
+                        obj.day[index].high_feelsLike = Math.round(result.data[index].app_max_temp);
+                        obj.day[index].icon = result.data[index].weather.icon;
+                        obj.day[index].low = Math.round(result.data[index].low_temp);
+                        obj.day[index].low_feelsLike = Math.round(result.data[index].app_min_temp);
+                        obj.day[index].name = moment(result.data[index].valid_date).format("dddd");
+                        obj.day[index].precipitation = result.data[index].pop;
+                    }
+
+                    if (widgetStyle != "cc" && widgetStyle != "ccClock") {
+                        if (obj.day[0].name == moment().format("dddd")) {
+                            obj.day[0].name = "Today";
+                        }
+
+                        for (var index = 0; index < 5; index++) {
+                            document.getElementById("Day" + index).innerHTML = obj.day[index].name;
+                            document.getElementById("Day" + index + "Icon").src = "Assets/Icons/" + getName(obj.day[index].code, obj.day[index].icon, true) + ".png";
+                            if (useRealFeel) {
+                                document.getElementById("Day" + index + "HighLow").innerHTML = obj.day[index].high_feelsLike + "&#176; / <font color=\"#a8a8a8\">" + obj.day[index].low_feelsLike + "&#176;<\/font>";
+                            } else {
+                                document.getElementById("Day" + index + "HighLow").innerHTML = obj.day[index].high + "&#176; / <font color=\"#a8a8a8\">" + obj.day[index].low + "&#176;<\/font>";
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                getCurrentLocationByIPAddress();
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    var lat = pos.coords.latitude;
+                    var lon = pos.coords.longitude;
+                    $("#locationCode").val(lat + ", " + lon);
+                }, {
+                    timeout: 10000
+                });
+            } else {
+                getCurrentLocationByIPAddress();
+            }
+        }
+
+        function getCurrentLocationByIPAddress() {
+            $.get("http://ipinfo.io", function(response) {
+                    $("#locationCode").val(response.postal);
+                }, "json")
+                .done(function() {
+                    console.log("ip2zip: success");
+                })
+                .fail(function(xhr, textStatus, errorThrown) {
+                    console.log("ip2zip: error");
+
+                    $(".alertDialog").dialog("close");
+                    $("<div class=\"alertDialog\"><table><tr><td><span class=\"ui-icon ui-icon-alert\" style=\"float: left; margin: 12px 12px 20px 0px;\"></span></td><td><p>An error occurred while retrieving the ZIP Code from the IP Address.<br><br>Error:<br>" + xhr.status + "<br>" + errorThrown + "</p></td></tr></table></div>").dialog({
+                        maxHeight: 320,
+                        modal: true,
+                        title: "Error",
+                        width: 350,
+                        buttons: {
+                            "OK": function() {
+                                $(this).dialog("close");
+                            }
+                        }
+                    });
+                });
+        }
+
+        function getMoonPhaseFromDate(year, month, day) {
+            var phases = ["New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full Moon", "Waning Gibbous", "Last Quarter Moon", "Waning Crescent"]
+            var b = 0;
+            var c = 0;
+            var e = 0;
+            var jd = 0;
+
+            if (month < 3) {
+                year--;
+                month += 12;
+            }
+
+            ++month;
+            c = 365.25 * year;
+            e = 30.6 * month;
+            jd = c + e + day - 694039.09; // jd is total days elapsed
+            jd /= 29.5305882; // divide by the moon cycle
+            b = parseInt(jd); // int(jd) -> b, take integer part of jd
+            jd -= b; // subtract integer part to leave fractional part of original jd
+            b = Math.round(jd * 8); // scale fraction from 0-8 and round
+
+            if (b >= 8) b = 0; // 0 and 8 are the same so turn 8 into 0
+            return phases[b];
+        }
+
+        function getName(code, icon, returnIcon) {
+            var animation, icon;
+            if (code == 200 || code == 201 || code == 202 || icon == "t04n") {
+                //Thunderstorm with light rain, Thunderstorm with rain, Thunderstorm with heavy rain, Thunderstorm with light drizzle (Night), Thunderstorm with drizzle (Night), Thunderstorm with heavy drizzle (Night)
+                animation = "thunderstorms";
+                icon = "thunderstorms";
+            } else if (icon == "t04d") {
+                //Thunderstorm with light drizzle (Day), Thunderstorm with drizzle (Day), Thunderstorm with heavy drizzle (Day)
+                animation = "thunderstorms";
+                icon = "scattered-thunderstorms";
+            } else if (code == 233) {
+                //Thunderstorm with Hail
+                animation = "hail";
+                icon = "hail";
+            } else if (icon == "d01d" || icon == "d02d" || icon == "d03d" || icon == "r04d" || icon == "r05d" || icon == "r06d") {
+                //Light Drizzle (Day), Drizzle (Day), Heavy Drizzle (Day), Light shower rain (Day), Shower rain (Day), Heavy shower rain (Day)
+                animation = "showers";
+                icon = "rain-showers";
+            } else if (icon == "d01n" || icon == "d02n" || icon == "d03n" || icon == "r04n" || icon == "r05d" || icon == "r06d") {
+                //Light Drizzle (Night), Drizzle (Night), Heavy Drizzle (Night), Light shower rain (Night), Shower rain (Night), Heavy shower rain (Night)
+                animation = "showers-night";
+                icon = "rain";
+            } else if (code == 500 || code == 501 || code == 502) {
+                //Light Rain, Moderate Rain, Heavy Rain
+                animation = "rain (without wiper)";
+                icon = "rain";
+            } else if (code == 511) {
+                //Freezing rain
+                animation = "rain (without wiper)";
+                icon = "freezing-rain";
+            } else if (icon == "s01n" || code == 601 || code == 602 || code == 622) {
+                //Light snow (Night)/Snow shower (Night), Snow, Heavy Snow, Heavy snow shower
+                animation = "snow";
+                icon = "snow";
+            } else if (icon == "s01d") {
+                //Light snow (Day)/Snow shower (Day)
+                animation = "snow";
+                icon = "snow-showers";
+            } else if (code == 610) {
+                //Mix snow/rain
+                animation = "sleet";
+                icon = "rain-snow-mix";
+            } else if (code == 611 || code == 612) {
+                //Sleet
+                animation = "sleet";
+                icon = "sleet";
+            } else if (code == 623) {
+                //Flurries
+                animation = "flurries";
+                icon = "flurries";
+            } else if (icon == "a01d" || icon == "a02d" || icon == "a03d" || icon == "a04d") {
+                //Mist (Day), Smoke (Day), Haze (Day), Sand/dust (Day)
+                animation = "hazy";
+                icon = "hazy";
+            } else if (icon == "a01n" || icon == "a02n" || icon == "a03n" || icon == "a04n") {
+                //Mist (Night), Smoke (Night), Haze (Night), Sand/dust (Night)
+                animation = "hazy-night";
+                icon = "hazy-night";
+            } else if (code == 741 || code == 751) {
+                //Fog, Freezing Fog
+                animation = "fog";
+                icon = "fog";
+            } else if (icon == "c01d") {
+                //Clear sky (day)
+                animation = "clear";
+                icon = "clear";
+            } else if (icon == "c01n") {
+                //Clear sky (night)
+                animation = "clear-night";
+                icon = "clear-night";
+            } else if (icon == "c02d") {
+                //Few clouds (day), Scattered clouds (day)
+                animation = "partly-cloudy";
+                icon = "partly-cloudy";
+            } else if (icon == "c02n") {
+                //Few clouds (night), Scattered clouds (night)
+                animation = "partly-cloudy-night";
+                icon = "partly-cloudy-night";
+            } else if (icon == "c03d") {
+                //Broken clouds (day)
+                animation = "mostly-cloudy";
+                icon = "mostly-cloudy";
+            } else if (icon == "c03n") {
+                //Broken clouds (night)
+                animation = "mostly-cloudy-night";
+                icon = "mostly-cloudy-night";
+            } else if (icon == "c04d") {
+                //Overcast clouds (Day)
+                animation = "cloudy";
+                icon = "cloudy";
+            } else if (icon == "c04n") {
+                //Overcast clouds (Night)
+                animation = "cloudy-night";
+                icon = "cloudy";
+            } else if (false) {
+                //cold
+                animation = "frost";
+                icon = "cold";
+            } else if (false) {
+                //fair (day)
+                animation = "clear";
+                icon = "fair";
+            } else if (false) {
+                //hot
+                animation = "hazy";
+                icon = "hot";
+            } else if (false) {
+                //tornado
+                animation = "thunderstorms";
+                icon = "tornado";
+            } else if (false) {
+                //windy
+                animation = "windy";
+                icon = "windy";
+            } else {
+                animation = "blank";
+                icon = "unknown";
+            }
+
+            if (returnIcon) {
+                return icon;
+            } else {
+                return animation;
+            }
+        }
+
+        function settings() {
+            document.getElementById("widgetStyle").value = store.get("HTC_Weather_Widget_widgetStyle", "all");
+            document.getElementById("showWeatherAnimation").checked = (store.get("HTC_Weather_Widget_showWeatherAnimation", "true") === "true");
+            document.getElementById("useMetricSystem").checked = (store.get("HTC_Weather_Widget_useMetricSystem", "false") === "true");
+            document.getElementById("useRealFeel").checked = (store.get("HTC_Weather_Widget_useRealFeel", "false") === "true");
+            document.getElementById("locationCode").value = store.get("HTC_Weather_Widget_locationCode", "47.6062, -122.3321");
+            document.getElementById("resize").value = store.get("HTC_Weather_Widget_resize", 100);
+            document.getElementById("updateInterval").value = store.get("HTC_Weather_Widget_updateInterval", 30);
+
+            $("#settings").dialog({
+                maxHeight: 320,
+                modal: true,
+                title: "Settings",
+                width: 400,
+                buttons: {
+                    "Cancel": function() {
+                        $(this).dialog("close");
+                    },
+                    "About": function() {
+                        try {
+                            $("#additionalWeatherInfo").html("Air Pressure: " + obj.pressure + " mb<br>Air Quality Index: " + obj.airQualityIndex + "<br>Chance of Precipitation: " + obj.day[0].precipitation + "%<br>Dew Point: " + obj.dewPoint + ((useMetricSystem == false) ? "&#176;F" : "&#176;C") + "<br>Full Location: " + obj.city + ", " + obj.state + ", " + obj.country + "<br>Latitude: " + obj.latitude + "<br>Longitude: " + obj.longitude + "<br>Moon Phase: " + obj.moonPhase + "<br>Observation Station: " + obj.observationStation + "<br>Sea Level Pressure: " + obj.seaLevelPressure + " mb<br>Time Zone of Weather Location: " + obj.timezone + "<br>Updated: " + obj.updateTimeString + "<br>UV Index: " + obj.uv + "<br>Visibility: " + obj.visibility + ((useMetricSystem == false) ? " mi" : " km") + "<br>Wind Chill: " + obj.feelsLike + ((useMetricSystem == false) ? "&#176;F" : "&#176;C"));
+                        } catch (err) {}
+
+                        $("#about").dialog({
+                            maxHeight: 320,
+                            modal: true,
+                            title: "About",
+                            width: 350,
+                            buttons: {
+                                "OK": function() {
+                                    $(this).dialog("close");
+                                }
+                            }
+                        });
+                    },
+                    "Reset": function() {
+                        document.getElementById("widgetStyle").value = "all";
+                        document.getElementById("showWeatherAnimation").checked = true;
+                        document.getElementById("useMetricSystem").checked = false;
+                        document.getElementById("useRealFeel").checked = false;
+                        document.getElementById("locationCode").value = "47.6062, -122.3321";
+                        document.getElementById("resize").value = 100;
+                        document.getElementById("updateInterval").value = 30;
+                    },
+                    "OK": function() {
+                        store.set("HTC_Weather_Widget_widgetStyle", document.getElementById("widgetStyle").value);
+                        store.set("HTC_Weather_Widget_showWeatherAnimation", document.getElementById("showWeatherAnimation").checked);
+                        store.set("HTC_Weather_Widget_useMetricSystem", document.getElementById("useMetricSystem").checked);
+                        store.set("HTC_Weather_Widget_useRealFeel", document.getElementById("useRealFeel").checked);
+                        store.set("HTC_Weather_Widget_locationCode", document.getElementById("locationCode").value);
+                        store.set("HTC_Weather_Widget_resize", document.getElementById("resize").value);
+                        store.set("HTC_Weather_Widget_updateInterval", document.getElementById("updateInterval").value);
+                        $(this).dialog("close");
+                    }
+                }
+            });
+        }
+
+        function updateClock() {
+            if (typeof TwentyFourHourClock === "undefined") {
+                TwentyFourHourClock = false;
+            }
+            var currentTime = new Date();
+            var currentHours = currentTime.getHours();
+            var currentMinutes = currentTime.getMinutes();
+            var currentSeconds = currentTime.getSeconds();
+            // Pad the minutes and seconds with leading zeros, if required
+            currentMinutes = (currentMinutes < 10 ? "0" : "") + currentMinutes;
+            currentSeconds = (currentSeconds < 10 ? "0" : "") + currentSeconds;
+            if (TwentyFourHourClock == false) {
+                var timeOfDay = (currentHours < 12) ? "AM" : "PM"
+                currentHours = (currentHours > 12) ? currentHours - 12 : currentHours;
+                currentHours = (currentHours == 0) ? 12 : currentHours;
+                if (timeOfDay == "PM") {
+                    document.getElementById("ampm").src = "Assets/Images/pm.png"
+                } else {
+                    document.getElementById("ampm").src = "Assets/Images/am.png"
+                }
+            }
+            // Compose the string for display
+            var currentTimeString = currentHours + ":" + currentMinutes;
+            // Update the time display
+            currentHours = (currentHours < 10 ? "0" : "") + currentHours;
+            if (document.getElementById("hr1").src.split("/").pop().split(".")[0] != currentHours.charAt(0)) {
+                document.getElementById("hr1").src = "Assets/Digits/" + currentHours.charAt(0) + ".png";
+            }
+            if (document.getElementById("hr2").src.split("/").pop().split(".")[0] != currentHours.charAt(1)) {
+                document.getElementById("hr2").src = "Assets/Digits/" + currentHours.charAt(1) + ".png";
+            }
+            if (document.getElementById("min1").src.split("/").pop().split(".")[0] != currentMinutes.charAt(0)) {
+                document.getElementById("min1").src = "Assets/Digits/" + currentMinutes.charAt(0) + ".png";
+            }
+            if (document.getElementById("min2").src.split("/").pop().split(".")[0] != currentMinutes.charAt(1)) {
+                document.getElementById("min2").src = "Assets/Digits/" + currentMinutes.charAt(1) + ".png";
+            }
+        }
+    </script>
+    <style>
+        body {
+            position: absolute;
+            left: 1px;
+            top: 0px;
+        }
+
+        SPAN#ampm {
+            font-family: Helvetica;
+            font-weight: bold;
+            color: #d1d1d1;
+            text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.7);
+            font-size: 15px;
+            display: none;
+        }
+
+        SPAN#calendar {
+            font-family: Helvetica;
+            font-weight: bold;
+            color: #d1d1d1;
+            text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.7);
+            font-size: 14px;
+            position: absolute;
+            top: 176px;
+            text-align: right;
+            width: 380px;
+        }
+
+        SPAN#clock {
+            font-family: Helvetica;
+            font-weight: bold;
+            color: #d1d1d1;
+            text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.7);
+            font-size: 26px;
+        }
+
+        TABLE#CalendarTable {
+            font-family: Helvetica;
+            font-weight: bold;
+            color: #d1d1d1;
+            text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.7);
+            font-size: 11px;
+            text-align: center;
+            margin-top: -17px;
+        }
+
+        TD#dateString {
+            font-family: Helvetica;
+            font-weight: bold;
+            color: #d1d1d1;
+            text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.7);
+            font-size: 11px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body style="margin: 0px;">
+    <div id="mainContentArea">
+        <img height="25px" id="refreshButton" onClick="location.reload()" src="Assets/Images/refresh.png" style="left: 10px; position: absolute; top: 0px;" title="Refresh" width="25px" />
+        <img height="25px" id="settingsButton" onClick="settings()" src="Assets/Images/settings.png" style="left: 35px; position: absolute; top: 0px;" title="Settings" width="25px" />
+        <iframe frameborder="0px" height="658px" id="animationFrame" marginheight="0" marginwidth="0" name="animation" scrolling="no" style="pointer-events: none;" src="Assets/Animations/cloudy.htm" width="414px"></iframe>
+
+        <div id="weatherFrame"></div>
+
+        <div id="clock">
+            <script type="text/javascript">
+                fetchWeatherData();
+                setInterval("fetchWeatherData()", 1000 * 60 * updateInterval);
+
+                if (widgetStyle != "cc" && widgetStyle != "forecast" && widgetStyle != "ccForecast") {
+                    document.write("<img height=\"238px\" src=\"Assets/Images/bg.png\" style=\"left: 0px; position: absolute; top: 0; z-index: -3;\" width=\"410px\">");
+                    document.write("<img id=\"ampm\" src=\"\" style=\"left: 55px; position: absolute; top: 141px; z-index: -3;\" width=\"20px\">");
+                    document.write("<table border=\"0px\" style=\"left: 55px; position: absolute; top: 34px; z-index:-1;\"><tr><td><img border=\"0px\" height=\"95px\" id=\"hr1\" src=\"\" width=\"59px\"><\/td><td><img border=\"0px\" height=\"95px\" id=\"hr2\" src=\"\" width=\"59px\"><\/td>\
+	                                 <td width=\"47px\"><\/td>\
+	                                 <td><img border=\"0px\" height=\"95px\" id=\"min1\" src=\"\" width=\"59px\"><\/td><td><img border=\"0px\" height=\"95px\" id=\"min2\" src=\"\" width=\"59px\"><\/td>\
+	                                 <\/tr>\
+	                                 <\/table>")
+                    document.write("<span id=\"clock\">");
+                    document.write("<script language=\"JavaScript\">updateClock(); setInterval('updateClock()', 1000);");
+                    document.write("<\/script><\/span");
+                    document.write("<span id=\"ampm\"> <\/span>");
+                    document.write("<span id=\"calendar\" style=\"top: 176px;\"> <\/span>");
+                    calendarDate();
+                    setInterval("calendarDate()", 1000);
+                } else if (widgetStyle == "cc" || widgetStyle == "ccForecast") {
+                    document.write("<span id=\"calendar\" style=\"top: 50px;\"> <\/span>");
+                    calendarDate();
+                    setInterval("calendarDate()", 1000);
+                } else {
+                    document.write("<img src=\"\" style=\"left: 0px; position: absolute; top: 167px; z-index: -3;\" width=\"410px\">");
+                }
+            </script>
+        </div>
+
+        <div id="weatherContainer">
+            <div id="textContainer">
+                <script type="text/javascript">
+                    if (widgetStyle == "all") {
+                        document.write("<img height=\"157px\" id=\"weatherIcon\" src=\"Assets/Icons/partly-cloudy.png\" style=\"left: 124px; position: absolute; top: 115px; z-index: 1;\" width=\"167px\">\
+			                                             <a id=\"city\">Data Error<\/a><a id=\"desc\"><b>Scattered clouds</b><\/a><a id=\"sunrise\">Sunrise: 7:14 AM<\/a><a id=\"sunset\">Sunset: 5:09 PM<\/a><a id=\"update\">Updated: 1/20/2020 11:18 AM CST<\/a><a id=\"temp\">24&#176;F<\/a><a id=\"humidity\">Humidity: 67%<\/a><a id=\"wind\">Wind: 2 MPH W<\/a>");
+                        document.write("<img src=\"Assets/Images/forecast-bg.png\" style=\"left: 0px; position: absolute; top: 256px; z-index: -1;\" width=\"410px\">");
+                        document.write("<table align=\"center\" cellpadding=\"0px\" cellspacing=\"0px\" style=\"left: 20px; position: absolute; top: 237px; z-index: 1\" width=\"370px\">\
+			                                             <tr>\
+			                                             <td align=\"center\"><img id=\"Day0Icon\" height=\"64px\" src=\"Assets/Icons/mostly-cloudy.png\"/><\/td>\
+			                                             <td align=\"center\"><img id=\"Day1Icon\" height=\"64px\" src=\"Assets/Icons/partly-cloudy.png\"/><\/td>\
+			                                             <td align=\"center\"><img id=\"Day2Icon\" height=\"64px\" src=\"Assets/Icons/cloudy.png\"/><\/td>\
+			                                             <td align=\"center\"><img id=\"Day3Icon\" height=\"64px\" src=\"Assets/Icons/rain.png\"/><\/td>\
+			                                             <td align=\"center\"><img id=\"Day4Icon\" height=\"64px\" src=\"Assets/Icons/rain.png\"/><\/td>\
+			                                             <\/tr>\
+			                                             <\/table>\
+			                                             <table align=\"center\" cellpadding=\"0px\" cellspacing=\"0px\" style=\"left: 20px; position: absolute; top: 295px;\" width=\"370px\">\
+			                                             <tr>\
+			                                             <td align=\"center\"><a id=\"Day0HighLow\">25&#176; / <font color=\"#a8a8a8\">21&#176;</font><\/a><\/td>\
+			                                             <td align=\"center\"><a id=\"Day1HighLow\">33&#176; / <font color=\"#a8a8a8\">20&#176;</font><\/a><\/td>\
+			                                             <td align=\"center\"><a id=\"Day2HighLow\">37&#176; / <font color=\"#a8a8a8\">30&#176;</font><\/a><\/td>\
+			                                             <td align=\"center\"><a id=\"Day3HighLow\">37&#176; / <font color=\"#a8a8a8\">34&#176;</font><\/a><\/td>\
+			                                             <td align=\"center\"><a id=\"Day4HighLow\">38&#176; / <font color=\"#a8a8a8\">33&#176;</font><\/a><\/td>\
+			                                             <\/tr>\
+			                                             <tr>\
+			                                             <td align=\"center\"><a id=\"Day0\">Today<\/a><\/td>\
+			                                             <td align=\"center\"><a id=\"Day1\">Tuesday<\/a><\/td>\
+			                                             <td align=\"center\"><a id=\"Day2\">Wednesday<\/a><\/td>\
+			                                             <td align=\"center\"><a id=\"Day3\">Thursday<\/a><\/td>\
+			                                             <td align=\"center\"><a id=\"Day4\">Friday<\/a><\/td>\
+			                                             <\/tr>\
+			                                             <\/table>");
+                    } else if (widgetStyle == "ccClock") {
+                        document.write("<img height=\"157px\" id=\"weatherIcon\" src=\"Assets/Icons/partly-cloudy.png\" style=\"left: 124px; position: absolute; top: 115px; z-index: 1;\" width=\"167px\">\
+			                                              <a id=\"city\">Data Error<\/a><a id=\"desc\"><b>Scattered clouds</b><\/a><a id=\"sunrise\">Sunrise: 7:14 AM<\/a><a id=\"sunset\">Sunset: 5:09 PM<\/a><a id=\"update\">Updated: 1/20/2020 11:18 AM CST<\/a><a id=\"temp\">24&#176;F<\/a><a id=\"humidity\">Humidity: 67%<\/a><a id=\"wind\">Wind: 2 MPH W<\/a>");
+                    } else if (widgetStyle == "cc") {
+                        document.write("<img src=\"Assets/Images/day.png\" style=\"left: 0px; position: absolute; top: 45px; z-index: -3;\" width=\"410px\">");
+                        document.write("<img height=\"157px\" id=\"weatherIcon\" src=\"Assets/Icons/partly-cloudy.png\" style=\"left: 124px; position: absolute; top: -14px; z-index: 1;\ width=\"167px\">\
+			                                             <a id=\"city\" style=\"top:47px;\">Data Error<\/a><a id=\"desc\" style=\"top: 63px;\"><b>Scattered clouds</b><\/a><a id=\"sunrise\" style=\"top: 73px;\">Sunrise: 7:14 AM<\/a><a id=\"sunset\" style=\"top: 83px;\">Sunset: 5:09 PM<\/a><a id=\"update\" style=\"top: 93px;\">Updated: 1/20/2020 11:18 AM CST<\/a><a id=\"temp\" style=\"top: 62px;\">24&#176;F<\/a><a id=\"humidity\" style=\"top: 83px;\">Humidity: 67%<\/a><a id=\"wind\" style=\"top: 93px;\">Wind: 2 MPH W<\/a>");
+                    } else if (widgetStyle == "ccForecast") {
+                        document.write("<img src=\"Assets/Images/day.png\" style=\"left: 0px; position: absolute; top: 45px; z-index: -3;\" width=\"410px\">");
+                        document.write("<img height=\"157px\" id=\"weatherIcon\" src=\"Assets/Icons/partly-cloudy.png\" style=\"left: 124px; position: absolute; top: -14px; z-index: 1;\" width=\"167px\">\
+			                                             <a id=\"city\" style=\"top: 47px;\">Data Error<\/a><a id=\"desc\" style=\"top: 63px;\"><b>Scattered clouds</b><\/a><a id=\"sunrise\" style=\"top: 73px;\">Sunrise: 7:14 AM<\/a><a id=\"sunset\" style=\"top: 83px;\">Sunset: 5:09 PM<\/a><a id=\"update\" style=\"top: 93px;\">Updated: 1/20/2020 11:18 AM CST<\/a><a id=\"temp\" style=\"top: 62px;\">24&#176;F<\/a><a id=\"humidity\" style=\"top: 83px;\">Humidity: 67%<\/a><a id=\"wind\" style=\"top: 93px;\">Wind: 2 MPH W<\/a>");
+                        document.write("<img src=\"Assets/Images/forecast-bg.png\" style=\"left: 0px; position: absolute; top: 145px; z-index: -1;\" width=\"410px\">");
+                        document.write("<table align=\"center\" cellpadding=\"0px\" cellspacing=\"0px\" style=\"left: 20px; position: absolute; top: 119px; z-index: 1;\" width=\"370px\">\
+			                                         <tr>\
+			                                         <td align=\"center\"><img id=\"Day0Icon\" height=\"67px\" src=\"Assets/Icons/mostly-cloudy.png\"/><\/td>\
+			                                         <td align=\"center\"><img id=\"Day1Icon\" height=\"67px\" src=\"Assets/Icons/partly-cloudy.png\"/><\/td>\
+			                                         <td align=\"center\"><img id=\"Day2Icon\" height=\"67px\" src=\"Assets/Icons/cloudy.png\"/><\/td>\
+			                                         <td align=\"center\"><img id=\"Day3Icon\" height=\"67px\" src=\"Assets/Icons/rain.png\"/><\/td>\
+			                                         <td align=\"center\"><img id=\"Day4Icon\" height=\"67px\" src=\"Assets/Icons/rain.png\"/><\/td>\
+			                                         <\/tr>\
+			                                         <\/table>\
+			                                         <table align=\"center\" cellpadding=\"0px\" cellspacing=\"0px\" style=\"left: 20px; position: absolute; top: 183px;\" width=\"370px\">\
+			                                         <tr>\
+			                                         <td align=\"center\"><a id=\"Day0HighLow\">25&#176; / <font color=\"#a8a8a8\">21&#176;</font><\/a><\/td>\
+			                                         <td align=\"center\"><a id=\"Day1HighLow\">33&#176; / <font color=\"#a8a8a8\">20&#176;</font><\/a><\/td>\
+			                                         <td align=\"center\"><a id=\"Day2HighLow\">37&#176; / <font color=\"#a8a8a8\">30&#176;</font><\/a><\/td>\
+			                                         <td align=\"center\"><a id=\"Day3HighLow\">37&#176; / <font color=\"#a8a8a8\">34&#176;</font><\/a><\/td>\
+			                                         <td align=\"center\"><a id=\"Day4HighLow\">38&#176; / <font color=\"#a8a8a8\">33&#176;</font><\/a><\/td>\
+			                                         <\/tr>\
+			                                         <tr>\
+			                                         <td align=\"center\"><a id=\"Day0\">Today<\/a><\/td>\
+			                                         <td align=\"center\"><a id=\"Day1\">Tuesday<\/a><\/td>\
+			                                         <td align=\"center\"><a id=\"Day2\">Wednesday<\/a><\/td>\
+			                                         <td align=\"center\"><a id=\"Day3\">Thursday<\/a><\/td>\
+			                                         <td align=\"center\"><a id=\"Day4\">Friday<\/a><\/td>\
+			                                         <\/tr>\
+			                                         <\/table>");
+                    } else if (widgetStyle == "forecast") {
+                        document.write("<img src=\"Assets/Images/day.png\" style=\"left: 0px; position: absolute; top: 45px; z-index:-3;\" width=\"410px\">");
+
+                        document.write("<table align=\"center\" cellpadding=\"0px\" cellspacing=\"0px\" style=\"left: 20px; position: absolute; top: 19px; z-index: 1\" width=\"370px\">\
+			                                         <tr>\
+			                                         <td align=\"center\"><img id=\"Day0Icon\" height=\"67px\" src=\"Assets/Icons/mostly-cloudy.png\"/><\/td>\
+			                                         <td align=\"center\"><img id=\"Day1Icon\" height=\"67px\" src=\"Assets/Icons/partly-cloudy.png\"/><\/td>\
+			                                         <td align=\"center\"><img id=\"Day2Icon\" height=\"67px\" src=\"Assets/Icons/cloudy.png\"/><\/td>\
+			                                         <td align=\"center\"><img id=\"Day3Icon\" height=\"67px\" src=\"Assets/Icons/rain.png\"/><\/td>\
+			                                         <td align=\"center\"><img id=\"Day4Icon\" height=\"67px\" src=\"Assets/Icons/rain.png\"/><\/td>\
+			                                         <\/tr>\
+			                                         <\/table>\
+			                                         <table align=\"center\" cellpadding=\"0px\" cellspacing=\"0px\" style=\"left: 20px; position: absolute; top: 83px;\" width=\"370px\">\
+			                                         <tr>\
+			                                         <td align=\"center\"><a id=\"Day0HighLow\">25&#176; / <font color=\"#a8a8a8\">21&#176;</font><\/a><\/td>\
+			                                         <td align=\"center\"><a id=\"Day1HighLow\">33&#176; / <font color=\"#a8a8a8\">20&#176;</font><\/a><\/td>\
+			                                         <td align=\"center\"><a id=\"Day2HighLow\">37&#176; / <font color=\"#a8a8a8\">30&#176;</font><\/a><\/td>\
+			                                         <td align=\"center\"><a id=\"Day3HighLow\">37&#176; / <font color=\"#a8a8a8\">34&#176;</font><\/a><\/td>\
+			                                         <td align=\"center\"><a id=\"Day4HighLow\">38&#176; / <font color=\"#a8a8a8\">33&#176;</font><\/a><\/td>\
+			                                         <\/tr>\
+			                                         <tr>\
+			                                         <td align=\"center\"><a id=\"Day0\">Today<\/a><\/td>\
+			                                         <td align=\"center\"><a id=\"Day1\">Tuesday<\/a><\/td>\
+			                                         <td align=\"center\"><a id=\"Day2\">Wednesday<\/a><\/td>\
+			                                         <td align=\"center\"><a id=\"Day3\">Thursday<\/a><\/td>\
+			                                         <td align=\"center\"><a id=\"Day4\">Friday<\/a><\/td>\
+			                                         <\/tr>\
+			                                         <\/table>");
+                    }
+                </script>
+            </div>
+        </div>
+
+        <div id="about" style="display: none;">
+            <b>Additional Weather Information</b>
+            <br>
+            <span id="additionalWeatherInfo">
+		Air Pressure: 1018.5 mb<br>
+		Air Quality Index: 59<br>
+		Chance of Precipitation: 0%<br>
+		Dew Point: 14.6&#176;F<br>
+		Full Location: Data Error<br>
+		Latitude: 47.6062<br>
+		Longitude: -122.3321<br>
+		Moon Phase: Waning Crescent<br>
+		Observation Station: E7961<br>
+		Sea Level Pressure: 1039.3 mb<br>
+		Time Zone of Weather Location: America/Pacific<br>
+		Updated: 1/20/2020 11:18 AM CST<br>
+		UV Index: 1.45854<br>
+		Visibility: 3.1 mi<br>
+		Wind Chill: 22.2&#176;F
+	</span>
+            <br>
+            <script type="text/javascript">
+                document.write("<a href=\"https://www.accuweather.com/en/search-locations?query=" + locationCode + "\" tabIndex=\"-1\" target=\"_blank\">View More Information</a>.");
+            </script>
+            <br>
+            <br>
+            <b>About HTC Weather Widget Reborn!</b>
+            <br> The weather data is from <a href="https://www.weatherbit.io/" tabIndex="-1" target="_blank">Weatherbit</a>.
+            <br>
+            <br>
+            <script type="text/javascript">
+                document.write(new Date().getFullYear());
+            </script> - Version 1.0
+        </div>
+
+        <div id="settings" style="display: none;">
+            <i>These settings will take effect after a refresh.</i>
+            <br>
+            <label for="widgetStyle">Widget Style:</label>
+            <select id="widgetStyle">
+            <option value="all">All</option>
+            <option value="ccClock">Current Weather & Clock</option>
+            <option value="ccForecast">Current Weather & Forecast</option>
+            <option value="cc">Current Weather Only</option>
+            <option value="forecast">Forecast Only</option>
+        </select>
+            <br>
+            <input type="checkbox" id="showWeatherAnimation" />Show Weather Animations
+            <br>
+            <input type="checkbox" id="useMetricSystem" />Use Metric System
+            <br>
+            <input type="checkbox" id="useRealFeel" />Use RealFeel Temperatures
+            <br>
+            <label for="locationCode">Latitude, Longitude OR Zip Code:</label>
+            <input type="input" id="locationCode" />
+            <button class="ui-button" id="getCurrentLocationButton" onClick="getCurrentLocation()" title="Get Current Location">
+            <img height="25px" src="Assets/Images/location.png" width="25px" />
+        </button>
+            <br>
+            <label for="resize">Resize (out of 100%):</label>
+            <input type="input" id="resize" />
+            <br>
+            <label for="updateInterval">Update Interval (min.):</label>
+            <input type="input" id="updateInterval" />
+            <br>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,29 @@
+body {
+	margin: 0px;
+}
+
+#moon {
+	background-color: transparent;
+	height: 736px;
+	left: 0px;
+	opacity: 0.0;
+	position: absolute;
+	top: -15px;
+	width: 414px;
+	-webkit-animation-delay: 5s;
+	-webkit-animation-duration: 15s;
+	-webkit-animation-iteration-count: infinite;
+	-webkit-animation-name: moon-animation;
+}
+
+@-webkit-keyframes moon-animation {
+	0% {
+		opacity: 0.3;
+	}
+	50% {
+		opacity: 1.0;
+	}
+	100% {
+		opacity: 0.3;
+	}
+}

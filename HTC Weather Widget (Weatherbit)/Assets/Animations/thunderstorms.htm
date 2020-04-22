@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Thunderstorms</title>
+    <meta charset="utf-8" content="width=device-width, minimum-scale=0.1, maximum-scale=1.0, user-scalable=yes" name="viewport" />
+    <link href="cloudy-night/cloudy-night.css" rel="stylesheet" />
+    <link href="rain/rain (without wiper).css" rel="stylesheet" />
+    <link href="thunderstorms/front-thunderstorm.css" rel="stylesheet" />
+    <link href="thunderstorms/thunderstorm.css" rel="stylesheet" />
+    <script src="cloudy-night/cloudy-night.js" type="text/javascript"></script>
+    <script src="rain/rain.js" type="text/javascript"></script>
+    <script>
+        window.onload = function() {
+            cloudyNight.init();
+            rain.init();
+        }
+    </script>
+</head>
+
+<body style="margin: 0px 0px 0px 0px; overflow: no;">
+    <div id="lightning-1">
+        <img src="thunderstorms/lightning-1.png">
+    </div>
+    <div id="lightning-2">
+        <img src="thunderstorms/lightning-2.png">
+    </div>
+    <div id="cloudContainer"></div>
+    <div id="dropContainer"></div>
+</body>
+
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Hazy (Day)</title>
+    <meta charset="utf-8" content="width=device-width, minimum-scale=0.1, maximum-scale=1.0, user-scalable=yes" name="viewport" />
+    <link href="hazy/hazy.css" rel="stylesheet" />
+    <link href="sun/sun.css" rel="stylesheet" />
+    <script src="hazy/hazy.js" type="text/javascript"></script>
+    <script src="sun/sun.js" type="text/javascript"></script>
+    <script>
+        window.onload = function() {
+            setInterval("location.reload()", 1000 * 60 * 60);
+            hazy.init();
+        }
+    </script>
+</head>
+
+<body style="margin: 0px 0px 0px 0px; overflow: no;">
+    <div id="sun">
+        <img id="sunContainer" onload="changeImage()" src="sun/sun-0.png" />
+    </div>
+    <div id="hazeContainer"></div>
+</body>
+
+</html>

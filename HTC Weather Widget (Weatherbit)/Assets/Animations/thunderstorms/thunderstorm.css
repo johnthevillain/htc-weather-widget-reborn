@@ -1,0 +1,27 @@
+body {
+	margin: 0px;
+}
+
+#lightning-1 {
+	background-color: transparent;
+	height: 373px;
+	opacity: 0.0;
+	position: absolute;
+	-webkit-animation-delay: 5.0s;
+	-webkit-animation-duration: 11s;
+	-webkit-animation-iteration-count: infinite;
+	-webkit-animation-name: lightning-1-animation;
+	width: 414px;
+}
+
+@-webkit-keyframes lightning-1-animation {
+	0% {
+		opacity: 10.0;
+	}
+	30% {
+		opacity: .0;
+	}
+	100% {
+		opacity: 0.0;
+	}
+}

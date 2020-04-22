@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Flurries</title>
+    <meta charset="utf-8" content="width=device-width, minimum-scale=0.1, maximum-scale=1.0, user-scalable=yes" name="viewport" />
+    <link href="showers/showers.css" rel="stylesheet" />
+    <link href="snow/snow.css" rel="stylesheet" />
+    <script src="showers/showers.js" type="text/javascript"></script>
+    <script src="snow/snow.js" type="text/javascript"></script>
+    <script>
+        window.onload = function() {
+            showers.init();
+            snow.init();
+        }
+    </script>
+</head>
+
+<body style="margin: 0px 0px 0px 0px; overflow: no;">
+    <div id="cloudContainer"></div>
+    <div id="dropContainer"></div>
+    <div id="wiper">
+        <img src="snow/wiper.png" />
+    </div>
+</body>
+
+</html>
