@@ -18,7 +18,7 @@ For XenHTML
 1. Download the widget (the folder "HTC Weather Widget (Weatherbit)" and its contents) and put it in your devices' Library/iWidgets folder.
 2. Edit the Widget.html file and insert your API key between the quotes in the line below: <br>
 `var apiKey = "YOUR API KEY GOES HERE BETWEEN THESE QUOTES. TO GET A FREE API KEY, CREATE A FREE ACCOUNT ON WEATHERBIT.";`
-2. In XenHTML, add the widget to your home/lock screen.
+2. In Xen HTML, add the widget to your home/lock screen.
 3. Enjoy!
 
 <br>
