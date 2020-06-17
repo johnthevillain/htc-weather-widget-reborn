@@ -27,7 +27,7 @@ For Xen HTML:
 
 ![Screenshot of Widget](https://i.imgur.com/4nuDywo.png)
 <br>
-You could
+You could:
 * Change the style of the widget (show clock, weather forecast, show just the clock, show just the forecast, ect.)
 * Disable/enable weather conditions
 * Use the metric system (if you are tired of the complicated American pounds, miles, and Fahrenheit)
