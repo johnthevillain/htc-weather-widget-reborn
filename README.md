@@ -14,7 +14,7 @@ Enjoy the weather!
 **You need a Weatherbit API Key for this widget to work!** <br>
 Since weather data sources like Yahoo and the Weather Channel ended offering weather data to the public without login, you need to create an account on Weatherbit and get a free API key. Get the free one, that is all you ever need.
 
-For XenHTML
+For Xen HTML:
 1. Download the widget (the folder "HTC Weather Widget (Weatherbit)" and its contents) and put it in your devices' Library/iWidgets folder.
 2. Edit the Widget.html file and insert your API key between the quotes in the line below: <br>
 `var apiKey = "YOUR API KEY GOES HERE BETWEEN THESE QUOTES. TO GET A FREE API KEY, CREATE A FREE ACCOUNT ON WEATHERBIT.";`
