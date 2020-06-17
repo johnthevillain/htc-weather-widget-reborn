@@ -12,7 +12,7 @@ Enjoy the weather!
 ### Installation
 
 **You need a Weatherbit API Key for this widget to work!** <br>
-Since weather data sources like Yahoo and the Weather Channel ended offering weather data to the public without login, you need to create an account on Weatherbit and get a free API key. Get the free one, that is all you ever need. I didn't use Dark Sky API since they just got bought by Apple and now their API is going to end next year. Also, I might consider migrating to OpenWeatherMap since they have their new One Call API.
+Since weather data sources like Yahoo and the Weather Channel ended offering weather data to the public without login, you need to create an account on Weatherbit and get a free API key. Get the free one, that is all you ever need.
 
 For XenHTML
 1. Download the widget (the folder "HTC Weather Widget (Weatherbit)" and its contents) and put it in your devices' Library/iWidgets folder.
